@@ -8,9 +8,6 @@ Welcome to OASIS_stat's documentation!
    readme
    installation
    usage
-   .. history
-   .. contributing
-   .. authors
 
 
 Installation
