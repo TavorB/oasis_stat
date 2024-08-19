@@ -307,7 +307,8 @@ def testPval_finite(X, cOpt, fOpt):
     """
 
     cOpt = np.nan_to_num(cOpt, 0)
-    fOpt = np.nan_to_num(fOpt, 0)
+    fOpt = np.nan_to_num(fOpt, 0).astype(float)
+
 
     if np.all(cOpt == cOpt[0]) or np.all(fOpt == fOpt[0]):
         return 1

@@ -24,9 +24,9 @@ This will install the latest version of OASIS from PyPI.
 Usage
 =====
 
-The package is currently documented primarily in each function's docstring. For a more detailed explanation of the test, please refer to the original paper: https://www.pnas.org/doi/10.1073/pnas.2304671121.
+The package is currently documented primarily in each function's docstring, where a detailed description, along with the input and outputs of each function can be found. For more background on the test, and a detailed description of it's theoretical guarantees and the optimization procedures devised, please refer to the original paper: https://www.pnas.org/doi/10.1073/pnas.2304671121.
 
-### List of Functions
+**List of Functions:**
 
 - `splitCounts`: Downsamples a matrix. Very slight modification of https://stackoverflow.com/questions/11818215/subsample-a-matrix-python. This downsamples uniformly at random.
 
