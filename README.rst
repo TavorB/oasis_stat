@@ -26,7 +26,7 @@ OASIS statistical test for interpretable analysis of contingency tables.
 Features
 --------
 
-* TODO
+* OASIS statistical test from https://www.pnas.org/doi/10.1073/pnas.2304671121. Initial commit.
 
 Credits
 -------
