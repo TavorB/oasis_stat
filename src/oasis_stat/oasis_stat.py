@@ -90,7 +90,6 @@ def splitCountsColwise(mat, downSampleFrac=.5):
 
 
 # 2: c,f generation (row and column embeddings for contingency table)
-
 def generate_cf_finite_optimized(X, randSeed=0, numRandInits=10):
     """Generates optimized column and row embeddings for the finite sample p-value.
     Tries multiple random initializations and returns the embeddings that maximize the finite sample p-value on the given X.
@@ -286,9 +285,7 @@ def testPval_asymp(X, cOpt, fOpt):
     """
 
     normalizedTestStat = compute_test_stat(X, cOpt, fOpt, asymptotic=True)
-
     pval = 2*scipy.stats.norm.cdf(-np.abs(normalizedTestStat))
-
     return pval
 
 
@@ -318,23 +315,9 @@ def testPval_finite(X, cOpt, fOpt):
 
     assert (fOpt.max()-fOpt.min() <= 1)
 
-    #### old code
-    # nj = X.sum(axis=0)
-    # njinvSqrt = 1.0/np.maximum(1, np.sqrt(nj))
-    # njinvSqrt[nj == 0] = 0
-
-    # # compute test statistic
-    # S = fOpt @ (X-X@np.outer(np.ones(X.shape[1]), nj)/X.sum())@(cOpt*njinvSqrt)
-
-    # M = X.sum()
-
-    # denom = (np.linalg.norm(cOpt)**2 - (cOpt@np.sqrt(nj))**2/M)
-    # pval = 2*np.exp(-2*S**2/denom)
-
 
     normalizedTestStat = compute_test_stat(X, cOpt, fOpt, asymptotic=False)
     pval = 2*np.exp(-normalizedTestStat**2/2)
-
     return min(np.nan_to_num(pval, 1), 1)
 
 
@@ -418,6 +401,8 @@ def OASIS_pvalue(X, numSplits=5, trainFrac=.25, asymptotic=False, return_f_c=Fal
         return_arr.extend([fOpt, cOpt])
     if return_test_stat:
         return_arr.append(testStat_opt)
-
+        
+    if len(return_arr) == 1:
+        return return_arr[0]
     return tuple(return_arr)
 
