@@ -19,7 +19,7 @@ To install OASIS, use the following pip command:
 
    pip install OASIS_stat
 
-This will install the latest version of OASIS from PyPI.
+This will install the latest version of OASIS from PyPI (additional code and information on github at https://github.com/TavorB/oasis_stat).
 
 Usage
 =====

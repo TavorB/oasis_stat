@@ -13,17 +13,11 @@ OASIS_stat
 
 
 
-OASIS statistical test for interpretable analysis of contingency tables.
+OASIS statistical test for interpretable analysis of contingency tables from https://www.pnas.org/doi/10.1073/pnas.2304671121.
 
-
+* Installable via pip: `pip install oasis_stat`
 * Free software: MIT license
 * Documentation: https://oasis-stat.readthedocs.io.
-
-
-Features
---------
-
-* OASIS statistical test from https://www.pnas.org/doi/10.1073/pnas.2304671121. Initial commit for pypi package.
 
 Credits
 -------
