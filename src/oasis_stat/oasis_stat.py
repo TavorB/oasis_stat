@@ -5,7 +5,7 @@ Tavor Z. Baharav, David Tse, and Julia Salzman
 
 OASIS (Optimized Adaptive Statistic for Inferring Structure) utilizes a linear test-statistic, enabling the computation of closed form P-value bounds, exact asymptotic ones, and interpretable rejection of the null. It is implemented and used in SPLASH: https://github.com/refresh-bio/SPLASH.
 
-The key method in this file is OASIS_pvalue (at the bottom of this file), which returns the p-value of the OASIS test on a given contingency table. The method can be used to compute the p-value using either the asymptotic or finite sample p-value (asymptotic flag), and can return the optimizing row and column embeddings (return_f_c flag).
+The key method in this file is OASIS_pvalue, which returns the p-value of the OASIS test on a given contingency table. The method can be used to compute the p-value using either the asymptotic or finite sample p-value (asymptotic flag), and can return the optimizing row and column embeddings (return_f_c flag).
 
 Please reach out on github with any questions, or directly to tavorb@mit.edu.
 '''
@@ -15,59 +15,6 @@ import scipy.stats # type: ignore
 
 
 # 1: utility functions
-
-def splitCounts(mat, downSampleFrac=.5):
-    """Downsamples a matrix. Very slight modification of https://stackoverflow.com/questions/11818215/subsample-a-matrix-python.
-    This downsamples uniformly at random.
-
-    Args:
-        mat (numpy.ndarray): The input counts matrix to be downsampled. Must be integer-valued.
-        downSampleFrac (float, optional): The fraction of counts to retain. Default is 0.5.
-
-    Returns:
-        out_mat (numpy.ndarray): The downsampled matrix.
-    """
-    keys, counts = zip(*[
-        ((i, j), mat[i, j])
-        for i in range(mat.shape[0])
-        for j in range(mat.shape[1])
-        if mat[i, j] > 0
-    ])
-    # Make the cumulative counts array
-    counts = np.array(counts, dtype=np.int64)
-    sum_counts = np.cumsum(counts)
-
-    # Decide how many counts to include in the sample
-    frac_select = downSampleFrac
-    count_select = int(sum_counts[-1] * frac_select)
-
-    # Choose unique counts
-    ind_select = sorted(np.random.choice(
-        range(sum_counts[-1]), count_select, replace=False))
-
-    # A vector to hold the new counts
-    out_counts = np.zeros(counts.shape, dtype=np.int64)
-
-    # Perform basically the merge step of merge-sort, finding where
-    # the counts land in the cumulative array
-    i = 0
-    j = 0
-    while i < len(sum_counts) and j < len(ind_select):
-        if ind_select[j] < sum_counts[i]:
-            j += 1
-            out_counts[i] += 1
-        else:
-            i += 1
-
-    # Rebuild the matrix using the `keys` list from before
-    out_mat = np.zeros(mat.shape, dtype=np.int64)
-    for i in range(len(out_counts)):
-        out_mat[keys[i]] = out_counts[i]
-
-    return out_mat
-
-
-
 def splitCountsColwise(mat, downSampleFrac=.5):
     """Downsamples a matrix columnwise, to ensure that each column is equally well represented in the train / test downsampled matrices.
 
@@ -78,6 +25,58 @@ def splitCountsColwise(mat, downSampleFrac=.5):
     Returns:
         out_mat (numpy.ndarray): The downsampled matrix, IxJ.
     """
+    
+    ####### Helper function to split counts in a vector
+    def splitCounts(mat, downSampleFrac=.5):
+        """Downsamples a matrix. Very slight modification of https://stackoverflow.com/questions/11818215/subsample-a-matrix-python.
+        This downsamples uniformly at random.
+
+        Args:
+            mat (numpy.ndarray): The input counts matrix to be downsampled. Must be integer-valued.
+            downSampleFrac (float, optional): The fraction of counts to retain. Default is 0.5.
+
+        Returns:
+            out_mat (numpy.ndarray): The downsampled matrix.
+        """
+        keys, counts = zip(*[
+            ((i, j), mat[i, j])
+            for i in range(mat.shape[0])
+            for j in range(mat.shape[1])
+            if mat[i, j] > 0
+        ])
+        # Make the cumulative counts array
+        counts = np.array(counts, dtype=np.int64)
+        sum_counts = np.cumsum(counts)
+
+        # Decide how many counts to include in the sample
+        frac_select = downSampleFrac
+        count_select = int(sum_counts[-1] * frac_select)
+
+        # Choose unique counts
+        ind_select = sorted(np.random.choice(
+            range(sum_counts[-1]), count_select, replace=False))
+
+        # A vector to hold the new counts
+        out_counts = np.zeros(counts.shape, dtype=np.int64)
+
+        # Perform basically the merge step of merge-sort, finding where
+        # the counts land in the cumulative array
+        i = 0
+        j = 0
+        while i < len(sum_counts) and j < len(ind_select):
+            if ind_select[j] < sum_counts[i]:
+                j += 1
+                out_counts[i] += 1
+            else:
+                i += 1
+
+        # Rebuild the matrix using the `keys` list from before
+        out_mat = np.zeros(mat.shape, dtype=np.int64)
+        for i in range(len(out_counts)):
+            out_mat[keys[i]] = out_counts[i]
+
+        return out_mat
+    
     out_mat = np.zeros_like(mat)
     for j in range(mat.shape[1]):
         if mat[:, j].sum() > 0:
@@ -100,8 +99,9 @@ def generate_cf_finite_optimized(X, randSeed=0, numRandInits=10):
         numRandInits (int, optional): The number of random initializations to try. Default is 10.
 
     Returns:
-        c (numpy.ndarray): The column embedding vector, J-dimensional.
-        f (numpy.ndarray): The row embedding vector, I-dimensional.
+        tuple: A tuple containing the column embedding vector (c) and the row embedding vector (f).
+            - c (numpy.ndarray): The column embedding vector, J-dimensional.
+            - f (numpy.ndarray): The row embedding vector, I-dimensional.
     """
     np.random.seed(randSeed)  # random initialization and extension
 
@@ -177,7 +177,7 @@ def generate_cf_finite_optimized(X, randSeed=0, numRandInits=10):
     cElong[np.arange(ncols)[relevantSamples]] = cMax  # fancy indexing
     cOpt = cElong
 
-    return cOpt, fOpt
+    return (cOpt, fOpt)
 
 
 def generate_cf_asymp_optimized(X):
@@ -187,8 +187,9 @@ def generate_cf_asymp_optimized(X):
         X (numpy.ndarray): The input count matrix, IxJ.
 
     Returns:
-        c (numpy.ndarray): The column embedding vector, J-dimensional.
-        f (numpy.ndarray): The row embedding vector, I-dimensional.
+        tuple: A tuple containing the column embedding vector (c) and the row embedding vector (f).
+            - c (numpy.ndarray): The length J column embedding vector.
+            - f (numpy.ndarray): The length I row embedding vector.
     """
     c = np.ones(X.shape[1])
 
@@ -224,7 +225,7 @@ def generate_cf_asymp_optimized(X):
     c = np.zeros(len(zeroCols))
     c[~zeroCols] = cOld
 
-    return c, f
+    return (c, f)
 
 
 # 3. p-value computation
@@ -241,7 +242,6 @@ def compute_test_stat(X, c, f, asymptotic=False):
     Returns:
         float: The OASIS test statistic.
     """
-
     c = np.nan_to_num(c, 0)
     f = np.nan_to_num(f, 0)
 
@@ -270,72 +270,42 @@ def compute_test_stat(X, c, f, asymptotic=False):
     return normalizedTestStat
 
 
-
-def testPval_asymp(X, cOpt, fOpt):
-    """Computes the OASIS asymptotic p-value for a given contingency table, row embedding, and column embedding.
-    In order for the p-value to be valid, the row and column embeddings cannot depend on the input count matrix X.
-
-    Args:
-        X (numpy.ndarray): The input count matrix, IxJ.
-        cOpt (numpy.ndarray): The column embedding vector, J-dimensional.
-        fOpt (numpy.ndarray): The row embedding vector, I-dimensional.
-
-    Returns:
-        float: The asymptotic p-value.
-    """
-
-    normalizedTestStat = compute_test_stat(X, cOpt, fOpt, asymptotic=True)
-    pval = 2*scipy.stats.norm.cdf(-np.abs(normalizedTestStat))
-    return pval
-
-
-def testPval_finite(X, cOpt, fOpt):
-    """Computes the OASIS finite sample p-value bound for a given contingency table, row embedding, and column embedding.
+def compute_pvalue(X, cOpt, fOpt, asymptotic=False):
+    """Computes the OASIS p-value for a given contingency table, row embedding, and column embedding.
     Note that in order for the p-value to be valid, the row and column embeddings cannot depend on the input count matrix X.
-    This p-value bound is finite-sample valid, but is not asymptotically uniform (a true p-value).
 
     Args:
         X (numpy.ndarray): The input count matrix, IxJ.
         cOpt (numpy.ndarray): The column embedding vector, J-dimensional.
         fOpt (numpy.ndarray): The row embedding vector, I-dimensional.
+        asymptotic (bool, optional): Whether to compute the asymptotic p-value. Default is False (finite sample p-value).
 
     Returns:
-        float: The finite sample p-value bound.
+        float: The OASIS p-value.
     """
-
     cOpt = np.nan_to_num(cOpt, 0)
     fOpt = np.nan_to_num(fOpt, 0).astype(float)
 
-
     if np.all(cOpt == cOpt[0]) or np.all(fOpt == fOpt[0]):
         return 1
-
-    if fOpt.max()-fOpt.min() > 1:
-        fOpt /= (fOpt.max()-fOpt.min())
-
-    assert (fOpt.max()-fOpt.min() <= 1)
-
-
-    normalizedTestStat = compute_test_stat(X, cOpt, fOpt, asymptotic=False)
-    pval = 2*np.exp(-normalizedTestStat**2/2)
-    return min(np.nan_to_num(pval, 1), 1)
-
-
-def computeChi2Test(X):
-    """Computes the chi-squared p-value for a contingency table, for easy comparison with OASIS p-values.
-
-    Args:
-        X (numpy.ndarray): The input count matrix, IxJ.
-
-    Returns:
-        float: The chi-squared p-value.
-    """
-    if len(X.shape) == 1:
+    
+    # if fOpt.max()-fOpt.min() > 1:
+    fOpt /= (fOpt.max()-fOpt.min())
+    cOpt /= np.linalg.norm(cOpt)
+    
+    normalizedTestStat = compute_test_stat(X, cOpt, fOpt, asymptotic)
+    if np.isnan(normalizedTestStat):
         return 1
-    X = X[X.sum(axis=1) > 0]
-    X = X[:, X.sum(axis=0) > 0]
-    _, pv, _, _ = scipy.stats.contingency.chi2_contingency(X)
-    return pv
+    
+    if asymptotic:
+        pval = 2*scipy.stats.norm.cdf(-np.abs(normalizedTestStat))
+    else:
+        pval = 2*np.exp(-normalizedTestStat**2/2)
+        
+    final_pv = min(np.nan_to_num(pval, 1), 1)
+    
+    return final_pv
+
 
 
 def effectSize_bin(X, c, f):
@@ -352,55 +322,63 @@ def effectSize_bin(X, c, f):
     if (c > 0).sum() == 0 or (c < 0).sum() == 0:
         return 0
 
-    return np.abs(f@X@(c > 0) / (X@(c > 0)).sum() - f@X@(c < 0) / (X@(c < 0)).sum())
+    e_size = np.abs(f@X@(c > 0) / (X@(c > 0)).sum() - f@X@(c < 0) / (X@(c < 0)).sum())
+
+    return e_size
 
 
-def OASIS_pvalue(X, numSplits=5, trainFrac=.25, asymptotic=False, return_f_c=False, return_test_stat=False, random_seed=0):
+def OASIS_pvalue(X, numSplits=5, trainFrac=.25, asymptotic=False, return_f_c=False, return_test_stat=False, return_effect_size=False, random_seed=0):
     """
     Computes the p-value using the OASIS method.
-
-    Parameters:
-    X (numpy.ndarray): The input count matrix, IxJ.
-    numSplits (int, optional): The number of train/test splits for computing optimized f,c on. Default is 5
-    trainFrac (float, optional): The fraction of data to be used for training. Default is 0.25.
-    asymptotic (bool, optional): Whether to use the asymptotic p-value. Default is False (uses finite sample p-value).
-    return_f_c (bool, optional): Whether to return the row and column embeddings. Default is False.
-    return_test_stat (bool, optional): Whether to return the test statistic. Default is False.
-    random_seed (int, optional): The random seed for reproducibility. Default is 0.
+        
+    Args:
+        X (numpy.ndarray): The input count matrix, IxJ.
+        numSplits (int, optional): The number of train/test splits for computing optimized f,c on. Default is 5
+        trainFrac (float, optional): The fraction of data to be used for training. Default is 0.25.
+        asymptotic (bool, optional): Whether to use the asymptotic p-value. Default is False (uses finite sample p-value).
+        return_f_c (bool, optional): Whether to return the row and column embeddings. Default is False.
+        return_test_stat (bool, optional): Whether to return the test statistic. Default is False.
+        return_effect_size (bool, optional): Whether to return the effect size. Default is False.
+        random_seed (int, optional): The random seed for reproducibility. Default is 0.
 
     Returns:
-    float: The minimum p-value computed across all splits, multiplied by the number of splits (Bonferroni correction). 
-           The returned value is capped at 1.
-    f (numpy.ndarray): The I-dimensional row embedding vector (only returned if return_f_c is True).
-    c (numpy.ndarray): The J-dimensional column embedding vector (only returned if return_f_c is True).
-    test_stat (float): The OASIS test statistic (only returned if return_test_stat is True).
+        tuple: A tuple containing the following elements (just the float p-value returned if none of the additional flags are true)::
+            - pv (float): The minimum p-value computed across all splits, multiplied by the number of splits (Bonferroni correction). The returned value is capped at 1.
+            - f (numpy.ndarray, optional): Length I row embedding vector, f. Returned only if `return_f_c` is True.
+            - c (numpy.ndarray, optional): Length J column embedding vector, c. Returned only if `return_f_c` is True.
+            - test_stat (float, optional): The OASIS test statistic. Returned only if `return_test_stat` is True.
+            - effect_size (float, optional): The effect size measure. Returned only if `return_effect_size` is True.
     """
     I, J = X.shape
     min_pval = 1
     cOpt, fOpt = (np.zeros(J), np.zeros(I))
-    testStat_opt = 0
+    test_stat_opt = 0
+    effect_size_opt = 0
     f_c_gen_method = generate_cf_asymp_optimized if asymptotic else generate_cf_finite_optimized
-    pval_test_method = testPval_asymp if asymptotic else testPval_finite
+    # pval_test_method = testPval_asymp if asymptotic else testPval_finite
 
     for i in range(numSplits):
         np.random.seed(i+random_seed)
         Xtrain = splitCountsColwise(X, trainFrac)
         Xtest = X-Xtrain
         c, f = f_c_gen_method(Xtrain)
-        pval = pval_test_method(Xtest, c, f)
-        testStat = compute_test_stat(Xtest, c, f, asymptotic)
+        pval = compute_pvalue(Xtest, c, f, asymptotic)
+        
         if pval < min_pval:
             min_pval = pval
             cOpt = c
             fOpt = f
-            testStat_opt = testStat
+            test_stat_opt = compute_test_stat(Xtest, c, f, asymptotic)
+            effect_size_opt = effectSize_bin(Xtest, c, f)
 
     pval = min(1, numSplits*min_pval)
     return_arr = [pval]
     if return_f_c:
         return_arr.extend([fOpt, cOpt])
     if return_test_stat:
-        return_arr.append(testStat_opt)
+        return_arr.append(test_stat_opt)
+    if return_effect_size:
+        return_arr.append(effect_size_opt)
         
     if len(return_arr) == 1:
         return return_arr[0]

@@ -2,8 +2,9 @@
 #
 
 # You can set these variables from the command line.
+######## critical to have python3.11 for my computer
 SPHINXOPTS    =
-SPHINXBUILD   = python -msphinx
+SPHINXBUILD   = python3.11 -msphinx
 SPHINXPROJ    = oasis_stat
 SOURCEDIR     = .
 BUILDDIR      = _build

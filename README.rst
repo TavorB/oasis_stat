@@ -13,7 +13,9 @@ OASIS_stat
 
 
 
-OASIS statistical test for interpretable analysis of contingency tables from https://www.pnas.org/doi/10.1073/pnas.2304671121.
+OASIS (Optimized Adaptive Statistic for Inferring Structure) statistical test for interpretable analysis of contingency tables from https://www.pnas.org/doi/10.1073/pnas.2304671121.
+Utilized in SPLASH https://github.com/refresh-bio/SPLASH for reference-free genomic inference https://www.cell.com/cell/fulltext/S0092-8674(23)01179-0. 
+
 
 * Installable via pip: `pip install oasis_stat`
 * Free software: MIT license
