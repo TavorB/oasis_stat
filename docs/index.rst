@@ -7,10 +7,7 @@ Welcome to OASIS_stat's documentation!
 
    readme
    installation
-   contributing
    api/index
-   history
-   authors
 
 
 Installation
@@ -41,7 +38,7 @@ The main function in the package is OASIS_pvalue. Here is a minimal example of h
 
    print(p_value)
 
-This will output the finite-sample valid p-value of the OASIS test on the given contingency table.
+This will output the finite-sample valid p-value of the OASIS test on the given contingency table. A more in depth vignette on how to use the package can be found on the github page: https://github.com/TavorB/oasis_stat/blob/main/OASIS_vignette.ipynb.
 
 
 
