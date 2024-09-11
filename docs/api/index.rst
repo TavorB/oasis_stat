@@ -4,6 +4,7 @@ API Documentation
 =================
 
 This section contains the API documentation for all the functions in the module. Each function is documented on a separate page.
+A vignette showing these functions in action can be found on the github page: https://github.com/TavorB/oasis_stat/blob/main/OASIS_vignette.ipynb.
 
 .. toctree::
    :maxdepth: 1
